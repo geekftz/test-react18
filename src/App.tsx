@@ -1,35 +1,82 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import axios from "axios";
+import { Suspense, useState } from "react";
 
-function App() {
-  const [count, setCount] = useState(0)
+function wrapPromise(promise: Promise<any>) {
+  let status = "pending";
+  let result: any;
 
-  return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
+  const suspender = promise.then(
+    (resolve) => {
+      status = "success";
+      result = resolve;
+    },
+    (err) => {
+      status = "error";
+      result = err;
+    }
+  );
+  console.log("🚀 --> wrapPromise --> suspender:", suspender);
+
+  return {
+    read() {
+      // 暴露一个read方法
+      if (status === "pending") {
+        throw suspender;
+      } else if (status === "error") {
+        throw result;
+      } else if (status === "success") {
+        return result;
+      }
+    },
+  };
 }
 
-export default App
+function fetchData(url: string) {
+  const promiseData = axios.get(url).then((data) => {
+    return data.data;
+  });
+  return wrapPromise(promiseData);
+}
+
+const data = fetchData("https://dog.ceo/api/breeds/image/random");
+
+const ShowDog: React.FC = () => {
+  const style = {
+    height: 300,
+    width: 300,
+  };
+  console.log("🚀 --> style:", style);
+
+  const dogData = data.read();
+
+  console.log("🚀 --> dogData:", dogData);
+  return (
+    <>
+      <img src={dogData.message} style={style} />
+    </>
+  );
+};
+
+function App() {
+  return (
+    <div className="App">
+      <div className="App">
+        <header className="App-header">
+          {/* <img src={logo} className="App-logo" alt="logo" /> */}
+          <div>logo</div>
+          <Suspense
+            fallback={
+              <>
+                <h1>正在加载....</h1>
+              </>
+            }
+          >
+            <ShowDog></ShowDog>
+          </Suspense>
+        </header>
+      </div>
+    </div>
+  );
+}
+
+export default App;
