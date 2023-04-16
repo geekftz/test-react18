@@ -1,38 +1,68 @@
-import { useEffect, useCallback, useMemo, useState } from "react";
+import { useEffect, useCallback, useMemo, useState, lazy } from "react";
 
 import "./App.css";
 
 function App() {
+  // useEffect(() => {
+  //   if ("IntersectionObserver" in window) {
+  //     const lazyloadImages = document.querySelectorAll(".lazy");
+
+  //     var imageObserver = new IntersectionObserver(function (
+  //       entries,
+  //       observer
+  //     ) {
+  //       console.log("🚀 --> entries:", entries);
+
+  //       entries.forEach(function (entry) {
+  //         // console.log("🚀 --> entry:", entry);
+  //         if (entry.isIntersecting) {
+  //           var image = entry.target;
+  //           // console.log("🚀 --> image:", image);
+  //           debugger;
+  //           image.src = image.dataset.src;
+  //           image.classList.remove("lazy");
+  //           imageObserver.unobserve(image);
+  //         }
+  //       });
+  //     });
+
+  //     lazyloadImages.forEach(function (image) {
+  //       imageObserver.observe(image);
+  //     });
+  //   }
+
+  //   setTimeout(() => {
+  //     console.log(document.body.scrollTop);
+  //   }, 1000);
+  // }, []);
+
   useEffect(() => {
-    if ("IntersectionObserver" in window) {
-      const lazyloadImages = document.querySelectorAll(".lazy");
+    const imgs = document.querySelectorAll(".lazy");
 
-      var imageObserver = new IntersectionObserver(function (
-        entries,
-        observer
-      ) {
-        console.log("🚀 --> entries:", entries);
+    function lazyload() {
+      var scrollTop =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const winHeight = window.innerHeight;
+      console.log("🚀 --> lazyload --> scrollTop:", scrollTop);
+      console.log("🚀 --> lazyload --> winHeight:", winHeight);
 
-        entries.forEach(function (entry) {
-          // console.log("🚀 --> entry:", entry);
-          if (entry.isIntersecting) {
-            var image = entry.target;
-            // console.log("🚀 --> image:", image);
-            image.src = image.dataset.src;
-            image.classList.remove("lazy");
-            imageObserver.unobserve(image);
-          }
-        });
-      });
+      for (let i = 0; i < imgs.length; i++) {
+        const img = imgs[i];
 
-      lazyloadImages.forEach(function (image) {
-        imageObserver.observe(image);
-      });
+        if (img.getAttribute("src")) {
+          continue;
+        }
+
+        if (img.offsetTop < scrollTop + winHeight) {
+          console.log("🚀 --> lazyload --> img:", img);
+          img.src = img.getAttribute("data-src");
+        }
+      }
     }
 
-    setTimeout(() => {
-      console.log(document.body.scrollTop);
-    }, 1000);
+    window.onscroll = lazyload;
+
+    lazyload();
   }, []);
 
   return (
